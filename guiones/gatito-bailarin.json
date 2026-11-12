@@ -1,0 +1,619 @@
+{
+  "creditos": [
+    "Modelo: Meshy",
+    "Animación: Forja Animación (Blender)",
+    "Rutina adaptada de un video de referencia del usuario"
+  ],
+  "escenas": [
+    {
+      "atmosfera": {
+        "niebla": 0.25
+      },
+      "id": "sc010",
+      "luz": {
+        "azimut": 200,
+        "bruma": 0.5,
+        "hora": "noche",
+        "nubes": 0
+      },
+      "set": {
+        "color_paredes": "#2b2235",
+        "habitacion_m": [
+          4,
+          3.6,
+          2.6
+        ],
+        "props": [
+          {
+            "escala": 0.3,
+            "modelo": "caja",
+            "pos": [
+              0.9,
+              0.75,
+              0
+            ],
+            "rot_z": 20
+          },
+          {
+            "escala": 0.22,
+            "modelo": "caja",
+            "pos": [
+              -1,
+              0.8,
+              0
+            ],
+            "rot_z": -15
+          }
+        ],
+        "suelo": "madera",
+        "tipo": "interior"
+      },
+      "titulo": "El estudio de práctica",
+      "tomas": [
+        {
+          "accion": [
+            {
+              "clip": "caminar",
+              "desde": [
+                -0.8,
+                0.08
+              ],
+              "hasta": [
+                0,
+                0
+              ],
+              "personaje": "gatito"
+            }
+          ],
+          "camara": [
+            0.24,
+            -1.76,
+            0.29
+          ],
+          "duracion_s": 3,
+          "id": "t01",
+          "intensidad": 0.4,
+          "lente_mm": 35,
+          "luces": [
+            {
+              "color": [
+                1,
+                0.85,
+                0.75
+              ],
+              "energia": 31,
+              "mira": "gatito",
+              "pos": [
+                0.64,
+                -1.28,
+                0.96
+              ],
+              "tamano": 1.28,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                1,
+                0.35,
+                0.7
+              ],
+              "energia": 46,
+              "mira": "gatito",
+              "pos": [
+                -0.96,
+                1.12,
+                0.8
+              ],
+              "tamano": 0.8,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                0.55,
+                0.35,
+                1
+              ],
+              "energia": 26,
+              "mira": "gatito",
+              "pos": [
+                1.12,
+                0.96,
+                0.64
+              ],
+              "tamano": 0.96,
+              "tipo": "AREA"
+            }
+          ],
+          "mira": "gatito",
+          "movimiento": "seguimiento",
+          "nota": "El gatito entra caminando al estudio, atento, con la cola en alto",
+          "plano": "general"
+        },
+        {
+          "accion": [
+            {
+              "desde": [
+                0,
+                0
+              ],
+              "personaje": "gatito"
+            }
+          ],
+          "camara": [
+            0,
+            -1.2,
+            0.19
+          ],
+          "duracion_s": 3,
+          "id": "t02",
+          "lente_mm": 50,
+          "luces": [
+            {
+              "color": [
+                1,
+                0.85,
+                0.75
+              ],
+              "energia": 31,
+              "mira": "gatito",
+              "pos": [
+                0.64,
+                -1.28,
+                0.96
+              ],
+              "tamano": 1.28,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                1,
+                0.35,
+                0.7
+              ],
+              "energia": 46,
+              "mira": "gatito",
+              "pos": [
+                -0.96,
+                1.12,
+                0.8
+              ],
+              "tamano": 0.8,
+              "tipo": "AREA"
+            }
+          ],
+          "mira": "gatito",
+          "movimiento": "fija",
+          "nota": "Se detiene frente al espejo, atento, mueve la cola y las orejas",
+          "plano": "medio"
+        },
+        {
+          "accion": [
+            {
+              "desde": [
+                0,
+                0
+              ],
+              "personaje": "gatito"
+            }
+          ],
+          "camara": [
+            0.4,
+            -1.28,
+            0.22
+          ],
+          "duracion_s": 4,
+          "id": "t03",
+          "intensidad": 0.3,
+          "lente_mm": 40,
+          "luces": [
+            {
+              "color": [
+                1,
+                0.85,
+                0.75
+              ],
+              "energia": 31,
+              "mira": "gatito",
+              "pos": [
+                0.64,
+                -1.28,
+                0.96
+              ],
+              "tamano": 1.28,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                1,
+                0.35,
+                0.7
+              ],
+              "energia": 46,
+              "mira": "gatito",
+              "pos": [
+                -0.96,
+                1.12,
+                0.8
+              ],
+              "tamano": 0.8,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                0.55,
+                0.35,
+                1
+              ],
+              "energia": 26,
+              "mira": "gatito",
+              "pos": [
+                1.12,
+                0.96,
+                0.64
+              ],
+              "tamano": 0.96,
+              "tipo": "AREA"
+            }
+          ],
+          "mira": "gatito",
+          "movimiento": "paneo",
+          "nota": "Baila al ritmo a 120 bpm con golpecitos de patitas alternas, balancea la cadera",
+          "plano": "medio"
+        },
+        {
+          "accion": [
+            {
+              "desde": [
+                0,
+                0
+              ],
+              "personaje": "gatito"
+            }
+          ],
+          "camara": [
+            -0.32,
+            -0.96,
+            0.18
+          ],
+          "duracion_s": 4,
+          "id": "t04",
+          "intensidad": 0.35,
+          "lente_mm": 85,
+          "luces": [
+            {
+              "color": [
+                1,
+                0.85,
+                0.75
+              ],
+              "energia": 26,
+              "mira": "gatito",
+              "pos": [
+                0.48,
+                -0.8,
+                0.64
+              ],
+              "tamano": 0.96,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                1,
+                0.35,
+                0.7
+              ],
+              "energia": 46,
+              "mira": "gatito",
+              "pos": [
+                -0.8,
+                0.8,
+                0.64
+              ],
+              "tamano": 0.64,
+              "tipo": "AREA"
+            }
+          ],
+          "mira": "gatito",
+          "movimiento": "orbita",
+          "nota": "Se agacha con las patas abiertas y baila al ritmo a 120 bpm, ladea la cabeza",
+          "plano": "primer_plano"
+        },
+        {
+          "accion": [
+            {
+              "desde": [
+                0,
+                0
+              ],
+              "personaje": "gatito"
+            }
+          ],
+          "camara": [
+            0,
+            -1.28,
+            0.16
+          ],
+          "duracion_s": 4,
+          "id": "t05",
+          "intensidad": 0.4,
+          "lente_mm": 50,
+          "luces": [
+            {
+              "color": [
+                1,
+                0.85,
+                0.75
+              ],
+              "energia": 31,
+              "mira": "gatito",
+              "pos": [
+                0.64,
+                -1.28,
+                0.96
+              ],
+              "tamano": 1.28,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                1,
+                0.35,
+                0.7
+              ],
+              "energia": 46,
+              "mira": "gatito",
+              "pos": [
+                -0.96,
+                1.12,
+                0.8
+              ],
+              "tamano": 0.8,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                0.55,
+                0.35,
+                1
+              ],
+              "energia": 26,
+              "mira": "gatito",
+              "pos": [
+                1.12,
+                0.96,
+                0.64
+              ],
+              "tamano": 0.96,
+              "tipo": "AREA"
+            }
+          ],
+          "mira": "gatito",
+          "movimiento": "dolly_in",
+          "nota": "Se para en dos patas y baila a 120 bpm agitando las patitas delanteras",
+          "plano": "medio"
+        },
+        {
+          "accion": [
+            {
+              "desde": [
+                0,
+                0
+              ],
+              "personaje": "gatito"
+            }
+          ],
+          "camara": [
+            0.48,
+            -1.6,
+            0.32
+          ],
+          "duracion_s": 3,
+          "id": "t06",
+          "lente_mm": 28,
+          "luces": [
+            {
+              "color": [
+                1,
+                0.85,
+                0.75
+              ],
+              "energia": 31,
+              "mira": "gatito",
+              "pos": [
+                0.64,
+                -1.28,
+                0.96
+              ],
+              "tamano": 1.28,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                1,
+                0.35,
+                0.7
+              ],
+              "energia": 46,
+              "mira": "gatito",
+              "pos": [
+                -0.96,
+                1.12,
+                0.8
+              ],
+              "tamano": 0.8,
+              "tipo": "AREA"
+            }
+          ],
+          "mira": "gatito",
+          "movimiento": "fija",
+          "nota": "Brinca con saltitos, feliz",
+          "plano": "general"
+        },
+        {
+          "accion": [
+            {
+              "clip": "caminar",
+              "desde": [
+                0,
+                0
+              ],
+              "hasta": [
+                0.56,
+                0.08
+              ],
+              "personaje": "gatito"
+            }
+          ],
+          "camara": [
+            0.16,
+            -1.28,
+            0.19
+          ],
+          "duracion_s": 3,
+          "id": "t07",
+          "intensidad": 0.4,
+          "lente_mm": 40,
+          "luces": [
+            {
+              "color": [
+                1,
+                0.85,
+                0.75
+              ],
+              "energia": 31,
+              "mira": "gatito",
+              "pos": [
+                0.64,
+                -1.28,
+                0.96
+              ],
+              "tamano": 1.28,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                1,
+                0.35,
+                0.7
+              ],
+              "energia": 46,
+              "mira": "gatito",
+              "pos": [
+                -0.96,
+                1.12,
+                0.8
+              ],
+              "tamano": 0.8,
+              "tipo": "AREA"
+            }
+          ],
+          "mira": "gatito",
+          "movimiento": "seguimiento",
+          "nota": "Camina con estilo, emocionado, con la cola en alto",
+          "plano": "medio"
+        },
+        {
+          "accion": [
+            {
+              "desde": [
+                0.56,
+                0.08
+              ],
+              "personaje": "gatito"
+            }
+          ],
+          "camara": [
+            0.56,
+            -0.88,
+            0.16
+          ],
+          "duracion_s": 3,
+          "id": "t08",
+          "intensidad": 0.3,
+          "lente_mm": 85,
+          "luces": [
+            {
+              "color": [
+                1,
+                0.85,
+                0.75
+              ],
+              "energia": 26,
+              "mira": "gatito",
+              "pos": [
+                0.96,
+                -0.64,
+                0.64
+              ],
+              "tamano": 0.96,
+              "tipo": "AREA"
+            },
+            {
+              "color": [
+                1,
+                0.35,
+                0.7
+              ],
+              "energia": 46,
+              "mira": "gatito",
+              "pos": [
+                0,
+                0.96,
+                0.64
+              ],
+              "tamano": 0.64,
+              "tipo": "AREA"
+            }
+          ],
+          "mira": "gatito",
+          "movimiento": "dolly_in",
+          "nota": "Pose final: se agacha suave, atento, ladea la cabeza y mira a camara",
+          "plano": "primer_plano"
+        }
+      ]
+    }
+  ],
+  "idioma": "es",
+  "miniatura": {
+    "segundo": 15
+  },
+  "personajes": [
+    {
+      "altura_m": 0.32,
+      "color": "#e08a3c",
+      "id": "gatito",
+      "modelo": "gatito-bebe-bailarin",
+      "pelo": "esponjoso",
+      "tipo": "gato"
+    }
+  ],
+  "render": {
+    "dof_en_previa": true,
+    "pelo": true
+  },
+  "short": {
+    "desde_s": 0,
+    "hasta_s": 27
+  },
+  "sinopsis": "De noche, en un pequeño estudio de baile con luces rosas y violetas, un gatito bebé naranja entra, se mira al espejo y baila una rutina al estilo K-pop: rebota al ritmo, marca golpecitos con las patitas, se agacha, se para en dos patas agitando las patitas, brinca y termina con una pose tierna.",
+  "sintetico_realista": true,
+  "titulo": "Gatito Bailarín",
+  "youtube": {
+    "categoria": "1",
+    "etiquetas": [
+      "gatito",
+      "baile",
+      "animacion 3d",
+      "blender"
+    ],
+    "para_ninos": false,
+    "titulo": "Gatito Bailarín"
+  },
+  "fps": 24,
+  "forja3d": {
+    "estado": "borrador",
+    "aprobado": false,
+    "version": 1,
+    "actualizado": "2026-11-12T03:39"
+  }
+}
