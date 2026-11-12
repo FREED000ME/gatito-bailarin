@@ -12,7 +12,7 @@ import sys
 
 FPS = 24
 LENTES = {"general": 24, "medio": 40, "americano": 35, "primer_plano": 85, "detalle": 100, "cenital": 28}
-MOVIMIENTOS = {"fija", "dolly_in", "dolly_out", "paneo", "grua", "orbita", "en_mano", "seguimiento"}
+MOVIMIENTOS = {"fija", "dolly_in", "dolly_out", "paneo", "grua", "orbita", "en_mano", "seguimiento", "acompanar"}
 HORAS = {"amanecer", "manana", "mediodia", "tarde", "atardecer", "noche"}
 
 

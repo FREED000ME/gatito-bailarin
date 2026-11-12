@@ -1,0 +1,11 @@
+{
+ "_ayuda": "Segundos por fotograma medidos, convertidos a una RTX 4090 (spf_4090). Los actualiza Claude después de cada render en Vast; gpu_vast.py los usa para estimar el costo total antes de alquilar.",
+ "previa": {
+  "spf_4090": 2.4,
+  "origen": "previa con pelo en tomas cercanas: ~230 fotogramas con pelo (~7 s en 4090) + el resto a ~0.15 s"
+ },
+ "final": {
+  "spf_4090": 59.8,
+  "origen": "medido en el render 32 (sc050/t01, el abrazo: pelo, 3 luces de cine, 1440p, 256 muestras): 80.4 s/fot en RTX 4080S; es la toma más pesada"
+ }
+}

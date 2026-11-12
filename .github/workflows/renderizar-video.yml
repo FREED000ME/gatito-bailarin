@@ -2,6 +2,9 @@
 # Lo lanza el conector con la herramienta renderizar_video (o tú desde Actions → Run workflow).
 #   equipo "nube":  runner de GitHub (CPU). Ideal para vistas previas; gratis en repos públicos.
 #   equipo "mi_pc": tu computadora con Blender y GPU, registrada como runner propio con la etiqueta "blender".
+#                   Variable del repo GPU_NUBE: "vast" = siempre una GPU alquilada en Vast.ai (estudio/gpu_vast.py: se enciende,
+#                   renderiza como runner de un solo uso y se destruye al terminar); "auto" = lo decide el archivo
+#                   estudio/equipo.txt ("vast" o "pc"; si falta, "pc"), que Claude escribe antes de cada render; otro valor = tu PC.
 name: Renderizar video
 
 on:
@@ -39,14 +42,66 @@ on:
 
 permissions:
   contents: write
+  statuses: write   # progreso del render (fotograma n/N) visible en el commit
 
 concurrency:
   group: renderizar-video-${{ github.ref_name }}-${{ inputs.equipo }}
   cancel-in-progress: false
 
 jobs:
+  decidir:
+    if: inputs.equipo == 'mi_pc'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      donde: ${{ steps.d.outputs.donde }}
+    steps:
+      - uses: actions/checkout@v4
+        if: vars.GPU_NUBE == 'auto'
+        with:
+          sparse-checkout: estudio
+      - id: d
+        env:
+          MODO: ${{ vars.GPU_NUBE }}
+        run: |
+          if [ "$MODO" = "vast" ]; then D=vast
+          elif [ "$MODO" = "auto" ] && [ "$(tr -d ' \r\n' < estudio/equipo.txt 2>/dev/null)" = "vast" ]; then D=vast
+          else D=pc; fi
+          echo "[ForjaCine] este render va a: $D (GPU_NUBE=${MODO:-sin definir})"
+          echo "donde=$D" >> "$GITHUB_OUTPUT"
+
+  encender_gpu:
+    needs: decidir
+    if: needs.decidir.outputs.donde == 'vast'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      instancia: ${{ steps.gpu.outputs.instancia }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            estudio
+            guiones
+      - name: Alquilar GPU en Vast.ai
+        id: gpu
+        env:
+          VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
+          RUNNER_PAT: ${{ secrets.RUNNER_PAT }}
+          GPU_MODELO: ${{ vars.GPU_MODELO }}
+          GPU_PRECIO_MAX: ${{ vars.GPU_PRECIO_MAX }}
+          GPU_HORAS_MAX: ${{ vars.GPU_HORAS_MAX }}
+          BLENDER_VERSION: ${{ inputs.blender_version }}
+          GH_TOKEN: ${{ github.token }}
+          GUION: guiones/${{ inputs.guion }}.json
+          CALIDAD: ${{ inputs.calidad }}
+          TOMAS: ${{ inputs.tomas }}
+        run: python3 estudio/gpu_vast.py encender
+
   render:
-    runs-on: ${{ inputs.equipo == 'mi_pc' && fromJSON('["self-hosted","blender"]') || 'ubuntu-latest' }}
+    needs: [decidir, encender_gpu]
+    if: ${{ !cancelled() && (needs.decidir.result == 'success' || needs.decidir.result == 'skipped') && (needs.encender_gpu.result == 'success' || needs.encender_gpu.result == 'skipped') }}
+    runs-on: ${{ inputs.equipo == 'mi_pc' && (needs.decidir.outputs.donde == 'vast' && fromJSON(format('["self-hosted","gpu-{0}"]', github.run_id)) || fromJSON('["self-hosted","blender"]')) || 'ubuntu-latest' }}
     timeout-minutes: ${{ inputs.equipo == 'mi_pc' && 2880 || 350 }}
     defaults:
       run:
@@ -58,6 +113,7 @@ jobs:
       FORMATOS: ${{ inputs.formatos }}
       TOMAS: ${{ inputs.tomas }}
       EQUIPO: ${{ inputs.equipo }}
+      PYTHONUTF8: "1"   # en Windows, que Python escriba títulos y subtítulos en UTF-8
     steps:
       - uses: actions/checkout@v4
 
@@ -75,32 +131,74 @@ jobs:
           set -e
           rm -rf salida && mkdir -p salida
           if [ ! -f "$GUION" ]; then echo "::error::[ForjaCine] ERROR: no existe $GUION (usa crear_guion primero)"; exit 1; fi
-          PY=$(command -v python3 || command -v python)
+          # Primer Python que funcione de verdad (en Windows, "python3" puede ser el acceso directo vacío de la Microsoft Store)
+          PY=""
+          for c in python3 python py; do
+            p=$(command -v "$c" || true)
+            if [ -n "$p" ] && "$p" -c "import sys" >/dev/null 2>&1; then PY="$p"; break; fi
+          done
+          if [ -z "$PY" ]; then echo "::error::[ForjaCine] ERROR: no encuentro Python 3 en este equipo (instálalo y ponlo en el PATH)"; exit 1; fi
           BL="${BLENDER:-$(command -v blender || true)}"
           if [ -z "$BL" ] && [ "$RUNNER_OS" = "Linux" ]; then
             if [ "$EQUIPO" = "nube" ]; then
               sudo apt-get update -qq
               sudo apt-get install -y -qq ffmpeg libgl1 libegl1 libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libice6 >/dev/null
             fi
+            # En Vast la máquina ya empezó a descargar Blender al arrancar (en paralelo): se espera a que termine
+            for i in $(seq 1 180); do [ -f "$HOME/.forja_blender_descargando" ] || break; [ $i = 1 ] && echo "[ForjaCine] esperando la descarga de Blender que empezó al arrancar la GPU"; sleep 5; done
             if [ ! -x "$HOME/blender/blender" ]; then
               MM=$(echo "$VER" | cut -d. -f1,2)
-              URL="https://download.blender.org/release/Blender${MM}/blender-${VER}-linux-x64.tar.xz"
-              echo "[ForjaCine] descargando $URL"
+              ARCH="Blender${MM}/blender-${VER}-linux-x64.tar.xz"
               mkdir -p "$HOME/blender"
-              curl -fsSL "$URL" | tar -xJ -C "$HOME/blender" --strip-components=1 || { echo "::error::[ForjaCine] ERROR: no pude descargar Blender $VER ($URL)"; exit 1; }
+              OK=""
+              # blender.org a veces bloquea (403) las IPs de centros de datos: se prueba con espejos oficiales
+              for BASE in https://mirrors.ocf.berkeley.edu/blender/release https://download.blender.org/release https://mirror.clarkson.edu/blender/release https://ftp.halifax.rwth-aachen.de/blender/release https://mirrors.dotsrc.org/blender/blender-release; do
+                echo "[ForjaCine] descargando $BASE/$ARCH"
+                if curl -fsSL --retry 2 -A "Mozilla/5.0 (ForjaCine)" -o /tmp/blender.tar.xz "$BASE/$ARCH" && tar -xJf /tmp/blender.tar.xz -C "$HOME/blender" --strip-components=1; then OK=1; break; fi
+                echo "[ForjaCine] falló ese espejo, pruebo otro"
+              done
+              rm -f /tmp/blender.tar.xz
+              [ -n "$OK" ] || { echo "::error::[ForjaCine] ERROR: no pude descargar Blender $VER de ningún espejo"; exit 1; }
             fi
             BL="$HOME/blender/blender"
           fi
           if [ -z "$BL" ]; then echo "::error::[ForjaCine] ERROR: no encuentro Blender en este equipo. Ponlo en el PATH o define la variable BLENDER en el archivo .env del runner"; exit 1; fi
+          # En Vast, ffmpeg se descarga en segundo plano al arrancar: se espera un poco y, si no llegó, se instala con apt
+          if ! command -v ffmpeg >/dev/null && [ -z "$FFMPEG" ] && [ "$RUNNER_OS" = "Linux" ]; then
+            for i in $(seq 1 36); do command -v ffmpeg >/dev/null && break; [ $i = 1 ] && echo "[ForjaCine] esperando ffmpeg"; sleep 5; done
+            if ! command -v ffmpeg >/dev/null; then
+              S=""; [ "$(id -u)" = 0 ] || S="sudo"
+              echo "[ForjaCine] instalo ffmpeg con apt"
+              $S apt-get update -qq >/dev/null 2>&1 || true
+              DEBIAN_FRONTEND=noninteractive $S apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
+            fi
+          fi
           command -v ffmpeg >/dev/null || [ -n "$FFMPEG" ] || { echo "::error::[ForjaCine] ERROR: falta ffmpeg en este equipo (instálalo y ponlo en el PATH)"; exit 1; }
           echo "BLENDER_BIN=$BL" >> "$GITHUB_ENV"
           echo "PY=$PY" >> "$GITHUB_ENV"
           "$BL" --version | head -n 1
 
       - name: Renderizar con Blender
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORJA_MAX_SPF: ${{ needs.decidir.outputs.donde == 'vast' && (inputs.calidad == 'previa' && (vars.GPU_MAX_SPF_PREVIA || '2.5') || (vars.GPU_MAX_SPF_FINAL || '60')) || '0' }}
         run: |
+          # Progreso real (fotograma n/N) publicado cada 20 s como estado del commit: lo lee Claude para la barra
+          ( while sleep 20; do
+              if [ -f salida/progreso.txt ]; then
+                D=$(head -c 135 salida/progreso.txt | tr -d '"\\\n')
+                curl -s -o /dev/null -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+                  "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+                  -d "{\"state\":\"pending\",\"context\":\"forja/render-$GITHUB_RUN_ID\",\"description\":\"$D\"}" || true
+              fi
+            done ) &
+          REPORTE=$!
+          set +e
           "$BLENDER_BIN" -b --factory-startup -noaudio -P estudio/forja_cine.py -- \
             --guion "$GUION" --calidad "$CALIDAD" --salida salida --tomas "$TOMAS" --raiz "$GITHUB_WORKSPACE"
+          R=$?
+          kill $REPORTE 2>/dev/null
+          exit $R
 
       - name: Montar video (FFmpeg)
         run: |
@@ -133,7 +231,7 @@ jobs:
           name: "🎬 ${{ steps.datos.outputs.titulo }} (${{ inputs.calidad }}, render ${{ github.run_number }})"
           body: |
             Guion: `${{ inputs.guion }}` · ${{ steps.datos.outputs.resumen }}
-            Generado por Forja3D Cine (Blender + FFmpeg) en ${{ inputs.equipo == 'mi_pc' && 'tu equipo' || 'la nube de GitHub' }}.
+            Generado por Forja3D Cine (Blender + FFmpeg) en ${{ inputs.equipo == 'mi_pc' && (needs.decidir.outputs.donde == 'vast' && 'una GPU alquilada en Vast.ai' || 'tu equipo') || 'la nube de GitHub' }}.
           files: ${{ steps.datos.outputs.archivos }}
           make_latest: false
 
@@ -155,3 +253,17 @@ jobs:
       - name: Limpiar fotogramas (equipo propio)
         if: always() && inputs.equipo == 'mi_pc'
         run: rm -rf salida/frames
+
+  apagar_gpu:
+    needs: [encender_gpu, render]
+    if: always() && needs.encender_gpu.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: estudio
+      - name: Destruir la GPU alquilada (deja de cobrar)
+        env:
+          VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
+          INSTANCIA: ${{ needs.encender_gpu.outputs.instancia }}
+        run: python3 estudio/gpu_vast.py apagar

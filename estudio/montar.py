@@ -19,6 +19,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import comun  # noqa: E402
 from comun import aviso, error  # noqa: E402
+import sonido  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--guion", required=True)
@@ -45,14 +46,37 @@ def ff(*args, desc="ffmpeg"):
         error(f"{desc} falló:\n{r.stderr[-2000:]}")
 
 
-def ruta_asset(rel):
+def ruta_asset(rel, avisar=True):
     if not rel:
         return None
     p = os.path.join(RAIZ, rel)
     if os.path.isfile(p):
         return p
-    aviso(f"no encuentro {rel}; sigo sin ese audio")
+    if avisar:
+        aviso(f"no encuentro {rel}; sigo sin ese audio")
     return None
+
+
+SONIDO = {"ambientes": {}, "foley": None, "musica": None}
+
+
+def generar_sonido():
+    """Sonido procedural (sonido.py): ambientes que falten, pasos sincronizados con la animación y música."""
+    eventos = {}
+    try:
+        with open(os.path.join(SAL, "eventos.json"), encoding="utf-8") as f:
+            eventos = json.load(f)
+    except OSError:
+        pass
+    mus = G.get("musica") or {}
+    if ruta_asset(mus.get("archivo"), avisar=False):
+        mus["archivo_existe"] = True
+    try:
+        SONIDO.update(sonido.generar(G, SAL, eventos))
+        aviso(f"sonido procedural: {len(SONIDO['ambientes'])} ambientes, {len(eventos.get('pasos', []))} pasos sincronizados"
+              + (", música de piano" if SONIDO.get("musica") else ""))
+    except Exception as e:  # noqa: BLE001
+        aviso(f"aviso: el sonido procedural falló ({type(e).__name__}: {e}); sigo con ruido de ambiente")
 
 
 # ---------------------------------------------------------------- audio
@@ -68,7 +92,7 @@ def mezclar_audio(destino):
         ini, dur = esc["inicio_s"], esc["fin_s"] - esc["inicio_s"]
         amb = (esc.get("audio") or {}).get("ambiente")
         vol = float((esc.get("audio") or {}).get("volumen_ambiente_db", -6))
-        archivo = ruta_asset(amb)
+        archivo = ruta_asset(amb, avisar=False) or SONIDO["ambientes"].get(esc["id"])
         if archivo:
             i = entrada("-stream_loop", "-1", "-i", archivo)
             fuente = f"[{i}:a]"
@@ -91,8 +115,12 @@ def mezclar_audio(destino):
                     ms2 = int((tom["inicio_s"] + float(d.get("desde_s") or 0)) * 1000)
                     filtros.append(f"[{j}:a]aformat=sample_rates=48000:channel_layouts=stereo,adelay={ms2}|{ms2}[v{len(capas)}]")
                     capas.append(f"[v{len(capas)}]")
+    if SONIDO.get("foley"):
+        i = entrada("-i", SONIDO["foley"])
+        filtros.append(f"[{i}:a]atrim=0:{DUR:.3f},asetpts=PTS-STARTPTS,volume=-3dB,aformat=sample_rates=48000:channel_layouts=stereo[fol]")
+        capas.append("[fol]")
     mus = G.get("musica") or {}
-    archivo = ruta_asset(mus.get("archivo"))
+    archivo = ruta_asset(mus.get("archivo"), avisar=False) or SONIDO.get("musica")
     if archivo:
         i = entrada("-stream_loop", "-1", "-i", archivo)
         vol = float(mus.get("volumen_db", -14))
@@ -133,8 +161,16 @@ def codificar_largo(lista, audio, destino):
     grano = int(acabado.get("grano", 5 if not PREVIA else 0))
     vineta = acabado.get("vineta", True)
     # format=rgb24: los fotogramas finales son PNG de 16 bits y la mezcla 'screen' del bloom se desborda en 16 bits
-    # (colores rosas y verdes). El video sale en 8 bits de todas formas.
+    # (colores rosas y verdes, como en el render 32). El video sale en 8 bits de todas formas.
     vf = [f"fps={FPS}", f"scale={res}:flags=lanczos", "format=rgb24"]
+    lente = acabado.get("lente", True)
+    if lente:
+        # Acabado de lente real (rompe el aspecto "generado"): halo suave en las altas luces,
+        # aberración cromática de 1 px y una distorsión de barril casi imperceptible.
+        k = 2 if res.startswith("3840") else 1
+        vf.append(f"split[a][b];[b]curves=all='0/0 0.72/0 1/1',gblur=sigma={14 * k}[h];[a][h]blend=all_mode=screen:all_opacity=0.22")
+        vf.append(f"rgbashift=rh=-{k}:bh={k}:edge=smear")
+        vf.append("lenscorrection=k1=-0.015:k2=-0.003:i=bilinear")
     if grano:
         vf.append(f"noise=alls={grano}:allf=t")  # grano después de escalar, para que no se "derrita"
     if vineta:
@@ -232,6 +268,7 @@ def main():
     lista, n, stats = lista_fotogramas()
     aviso(f"montando {n} fotogramas · {DUR:.1f} s · {ARGS.calidad}")
     audio = os.path.join(SAL, "mezcla.wav")
+    generar_sonido()
     mezclar_audio(audio)
     archivos = []
     largo = os.path.join(SAL, "largo.mp4")

@@ -1,0 +1,375 @@
+{
+ "version": 1,
+ "especie": "perro",
+ "convencion": "fase 0 = apoyo; +1 = extensión máxima; ROM en grados",
+ "armonicos": 4,
+ "fuentes": [
+  "Fischer MS et al. 2018, Scientific Reports — cinemática 3D de los miembros posteriores de Beagle, Malinois, Whippet y Bulldog francés al paso y al trote (doi:10.1038/s41598-018-34310-0)",
+  "Comparative kinematic gait analysis in young and old Beagle dogs, J Vet Sci 2017;18(4):521 — forma de las curvas de hombro, codo, carpo, cadera, rodilla y tarso al trote (1.8 m/s)",
+  "Pelvic limb joint motion increases with treadmill walking speed in healthy Beagles, AJVR — el ROM crece 6.11° (cadera), 5.37° (rodilla) y 3.66° (tarso) por km/h",
+  "Three-dimensional movements of the pelvis and the lumbar intervertebral joints in walking and trotting dogs, Vet J — roll ~13°/11°, yaw ~5°/6°, pitch ~8° bifásico",
+  "Front Vet Sci 2021 (doi:10.3389/fvets.2021.709966) — duty factor ~0.7 al paso y ~0.4 al trote; beagle: rotación lateral de pelvis 4.6° paso / 5.8° trote",
+  "Maes LD et al. 2008, J Exp Biol 211:138 — coordinación entre patas y efecto de la velocidad (paso lateral, trote, galopes)",
+  "Rohwedder T, Biomechanics of the Canine Elbow Joint (IntechOpen) — ROM sagital del codo al trote 48–70°",
+  "De Souza MC et al. 2021, Vet Med-Czech 66:8 — el carpo tiene el mayor ROM: ~80–90° al paso y ~110–120° al trote"
+ ],
+ "marchas": {
+  "caminar": {
+   "duty": 0.65,
+   "fase": {
+    "Tra_L": 0.0,
+    "Del_L": 0.25,
+    "Tra_R": 0.5,
+    "Del_R": 0.75
+   },
+   "zancada": 1.15,
+   "alza": 0.1,
+   "pelvis": {
+    "roll": [
+     10.0,
+     1
+    ],
+    "yaw": [
+     4.6,
+     1
+    ],
+    "pitch": [
+     8.0,
+     2
+    ]
+   },
+   "vel_ref": 0.6,
+   "articulaciones": {
+    "hombro": {
+     "fourier": [
+      0.32375,
+      0.48992,
+      0.27222,
+      0.34961,
+      -0.30771,
+      -0.25979,
+      -0.05025,
+      0.09483,
+      0.10898
+     ],
+     "rom": 30,
+     "rom_por_mps": 14.39
+    },
+    "codo": {
+     "fourier": [
+      0.27706,
+      -0.43021,
+      0.2795,
+      0.43974,
+      0.12608,
+      0.25388,
+      -0.1199,
+      0.05991,
+      -0.17367
+     ],
+     "rom": 55,
+     "rom_por_mps": 16.19
+    },
+    "carpo": {
+     "fourier": [
+      0.3801,
+      0.23982,
+      0.78383,
+      0.3792,
+      -0.15679,
+      -0.05842,
+      -0.10295,
+      0.00949,
+      0.05148
+     ],
+     "rom": 85,
+     "rom_por_mps": 17.99
+    },
+    "cadera": {
+     "fourier": [
+      -0.04636,
+      -0.81034,
+      -0.12866,
+      -0.10989,
+      0.31436,
+      0.08254,
+      -0.01719,
+      0.00543,
+      -0.00103
+     ],
+     "rom": 40,
+     "rom_por_mps": 21.98
+    },
+    "rodilla": {
+     "fourier": [
+      0.31423,
+      -0.33555,
+      0.23681,
+      0.52152,
+      0.1787,
+      0.24581,
+      -0.2101,
+      -0.01477,
+      -0.13821
+     ],
+     "rom": 40,
+     "rom_por_mps": 19.32
+    },
+    "tarso": {
+     "fourier": [
+      0.15803,
+      -0.34075,
+      0.08348,
+      0.4305,
+      0.22871,
+      0.26011,
+      -0.20213,
+      -0.08322,
+      -0.14264
+     ],
+     "rom": 32,
+     "rom_por_mps": 13.17
+    }
+   }
+  },
+  "trotar": {
+   "duty": 0.45,
+   "fase": {
+    "Del_L": 0.0,
+    "Tra_R": 0.0,
+    "Del_R": 0.5,
+    "Tra_L": 0.5
+   },
+   "zancada": 1.75,
+   "alza": 0.16,
+   "pelvis": {
+    "roll": [
+     9.0,
+     1
+    ],
+    "yaw": [
+     5.8,
+     1
+    ],
+    "pitch": [
+     8.0,
+     2
+    ]
+   },
+   "vel_ref": 1.8,
+   "articulaciones": {
+    "hombro": {
+     "fourier": [
+      0.25004,
+      0.62985,
+      -0.03097,
+      -0.14969,
+      -0.2745,
+      0.17146,
+      0.13703,
+      -0.12844,
+      -0.11367
+     ],
+     "rom": 35,
+     "rom_por_mps": 14.39
+    },
+    "codo": {
+     "fourier": [
+      0.24301,
+      -0.114,
+      0.5718,
+      0.39292,
+      -0.31643,
+      0.05873,
+      -0.21175,
+      -0.06323,
+      -0.0396
+     ],
+     "rom": 62,
+     "rom_por_mps": 16.19
+    },
+    "carpo": {
+     "fourier": [
+      0.30607,
+      0.68157,
+      0.58419,
+      -0.06233,
+      -0.28338,
+      0.10086,
+      0.06146,
+      -0.05518,
+      -0.11007
+     ],
+     "rom": 112,
+     "rom_por_mps": 17.99
+    },
+    "cadera": {
+     "fourier": [
+      -0.08055,
+      -0.79008,
+      0.30575,
+      0.13859,
+      0.10175,
+      -0.09126,
+      0.02011,
+      0.05854,
+      0.01191
+     ],
+     "rom": 44,
+     "rom_por_mps": 21.98
+    },
+    "rodilla": {
+     "fourier": [
+      0.26015,
+      -0.08371,
+      0.49361,
+      0.49686,
+      -0.349,
+      -0.03273,
+      -0.18633,
+      -0.04899,
+      -0.03185
+     ],
+     "rom": 45,
+     "rom_por_mps": 19.32
+    },
+    "tarso": {
+     "fourier": [
+      0.18458,
+      -0.13968,
+      0.40219,
+      0.48345,
+      -0.33921,
+      -0.14009,
+      -0.12148,
+      0.03181,
+      0.08298
+     ],
+     "rom": 38,
+     "rom_por_mps": 13.17
+    }
+   }
+  },
+  "galopar": {
+   "duty": 0.3,
+   "fase": {
+    "Tra_L": 0.0,
+    "Tra_R": 0.12,
+    "Del_L": 0.48,
+    "Del_R": 0.6
+   },
+   "zancada": 2.8,
+   "alza": 0.22,
+   "pelvis": {
+    "roll": [
+     6.0,
+     1
+    ],
+    "yaw": [
+     4.0,
+     1
+    ],
+    "pitch": [
+     16.0,
+     1
+    ]
+   },
+   "vel_ref": 4.0,
+   "articulaciones": {
+    "hombro": {
+     "fourier": [
+      0.23665,
+      0.53256,
+      -0.54023,
+      0.02326,
+      0.17685,
+      -0.14087,
+      -0.16075,
+      0.08111,
+      -0.06165
+     ],
+     "rom": 50,
+     "rom_por_mps": 14.39
+    },
+    "codo": {
+     "fourier": [
+      0.13326,
+      0.48841,
+      0.57223,
+      -0.0962,
+      -0.40726,
+      -0.1136,
+      -0.16483,
+      0.00968,
+      -0.08793
+     ],
+     "rom": 75,
+     "rom_por_mps": 16.19
+    },
+    "carpo": {
+     "fourier": [
+      0.21538,
+      0.91209,
+      -0.07637,
+      -0.04184,
+      0.19641,
+      -0.1675,
+      -0.13882,
+      0.06457,
+      -0.00694
+     ],
+     "rom": 125,
+     "rom_por_mps": 17.99
+    },
+    "cadera": {
+     "fourier": [
+      -0.09543,
+      -0.46425,
+      0.75807,
+      -0.13904,
+      -0.05788,
+      0.0957,
+      0.02795,
+      0.00721,
+      -0.00773
+     ],
+     "rom": 62,
+     "rom_por_mps": 21.98
+    },
+    "rodilla": {
+     "fourier": [
+      0.17815,
+      0.42896,
+      0.51703,
+      -0.12236,
+      -0.51951,
+      -0.05796,
+      -0.11583,
+      0.02145,
+      0.01017
+     ],
+     "rom": 60,
+     "rom_por_mps": 19.32
+    },
+    "tarso": {
+     "fourier": [
+      0.10697,
+      0.38458,
+      0.45355,
+      -0.26283,
+      -0.4633,
+      0.09397,
+      -0.01731,
+      0.04729,
+      -0.00838
+     ],
+     "rom": 50,
+     "rom_por_mps": 13.17
+    }
+   }
+  }
+ },
+ "aprendido_de": [
+  "literatura veterinaria"
+ ]
+}

@@ -1,0 +1,5 @@
+{
+  "_ayuda": "Ofertas y máquinas de Vast.ai que se quedaron trabadas al arrancar: gpu_vast.py no las vuelve a alquilar. Claude las añade después de cada fallo.",
+  "ofertas": [46468361, 46468366],
+  "maquinas": []
+}
