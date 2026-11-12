@@ -1,0 +1,103 @@
+# Forja3D Animación — hornea en Blender la rutina de un modelo animado con animar_modelo
+# (clips en orden + repeticiones con fatiga + naturalidad con la matriz de pesos) y lo publica como Release
+# con <modelo>.fbx, <modelo>.glb, <modelo>.blend e informe.json. Lo lanza el conector con hornear_animacion.
+name: Hornear animación
+
+on:
+  workflow_dispatch:
+    inputs:
+      modelo:
+        description: Carpeta del modelo (assets/modelos/<nombre> o Assets/Forja3D/Modelos/<nombre>)
+        required: true
+      fps:
+        description: Fotogramas por segundo (12-60)
+        default: "30"
+      blender_version:
+        description: Versión de Blender
+        default: 5.2.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hornear-animacion-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  hornear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      # Las entradas van por variables de entorno (nunca interpoladas dentro de los scripts)
+      MODELO: ${{ inputs.modelo }}
+      FPS: ${{ inputs.fps }}
+      VER: ${{ inputs.blender_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Caché de Blender
+        uses: actions/cache@v4
+        with:
+          path: ~/blender
+          key: blender-${{ inputs.blender_version }}-linux-x64
+
+      - name: Preparar Blender
+        run: |
+          set -e
+          if ! [[ "$MODELO" =~ ^(assets/modelos|Assets/Forja3D/Modelos)/[A-Za-z0-9_-]+$ ]]; then echo "::error::[ForjaCine] ERROR: carpeta de modelo no válida: $MODELO"; exit 1; fi
+          if [ ! -f "$MODELO/forja3d.json" ]; then echo "::error::[ForjaCine] ERROR: no existe $MODELO/forja3d.json (guárdalo con guardar_asset)"; exit 1; fi
+          if ! [[ "$FPS" =~ ^[0-9]{2}$ ]]; then echo "::error::[ForjaCine] ERROR: fps no válido: $FPS"; exit 1; fi
+          if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "::error::[ForjaCine] ERROR: versión de Blender no válida: $VER"; exit 1; fi
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgl1 libegl1 libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libice6 >/dev/null
+          if [ ! -x "$HOME/blender/blender" ]; then
+            MM=$(echo "$VER" | cut -d. -f1,2)
+            URL="https://download.blender.org/release/Blender${MM}/blender-${VER}-linux-x64.tar.xz"
+            echo "[ForjaCine] descargando $URL"
+            mkdir -p "$HOME/blender"
+            curl -fsSL "$URL" | tar -xJ -C "$HOME/blender" --strip-components=1 || { echo "::error::[ForjaCine] ERROR: no pude descargar Blender $VER ($URL)"; exit 1; }
+          fi
+          echo "BLENDER_BIN=$HOME/blender/blender" >> "$GITHUB_ENV"
+          echo "NOMBRE=$(basename "$MODELO")" >> "$GITHUB_ENV"
+          "$HOME/blender/blender" --version | head -n 1
+
+      - name: Hornear con Blender
+        run: |
+          rm -rf salida && mkdir -p salida
+          "$BLENDER_BIN" -b --factory-startup -noaudio --python-exit-code 1 -P estudio/hornear_animacion.py -- \
+            --modelo "$MODELO" --fps "$FPS" --salida salida --raiz "$GITHUB_WORKSPACE"
+          test -f salida/informe.json
+
+      - name: Datos de la entrega
+        id: datos
+        run: |
+          python3 - <<'PYEOF' >> "$GITHUB_OUTPUT"
+          import json
+          m = json.load(open("salida/informe.json", encoding="utf-8"))
+          print("archivos=" + ",".join("salida/" + a for a in m["archivos"]))
+          print(f"resumen={len(m['tiempos'])} tiempos · {m['duracion_s']} s a {m['fps']} fps · {m['huesos_naturalidad']} huesos con naturalidad · Blender {m['blender']}")
+          PYEOF
+
+      - name: Guardar como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: animacion-${{ github.run_number }}
+          path: salida/*.*
+          retention-days: 30
+
+      - name: Publicar Release con la animación
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: animacion-${{ github.run_number }}
+          name: "🎞️ ${{ env.NOMBRE }} animado (horneado ${{ github.run_number }})"
+          body: |
+            Modelo `${{ inputs.modelo }}` · ${{ steps.datos.outputs.resumen }}
+            Archivos: FBX (Unity, Unreal, Godot), GLB (web) y .blend (para seguir editando en Blender).
+            Generado por Forja3D Animación.
+          files: ${{ steps.datos.outputs.archivos }}
+          make_latest: false

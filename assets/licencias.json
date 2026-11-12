@@ -1,0 +1,4 @@
+{
+  "_ayuda": "Registra aquí cada recurso que no sea tuyo. La clave es el nombre o la ruta del recurso tal como aparece en los guiones; montar.py incluye en la descripción de YouTube solo los que el guion usa. 'siempre': true los incluye siempre.",
+  "assets/audio/olas.wav": { "titulo": "Olas en la orilla", "autor": "(rellena: autor en Freesound)", "licencia": "CC0", "url": "" }
+}

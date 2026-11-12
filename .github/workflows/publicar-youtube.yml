@@ -1,0 +1,36 @@
+# Forja3D Cine — cambia la privacidad de un video ya subido (o lo programa).
+# Solo lo lanza la herramienta publicar_youtube del conector, después de que tú lo apruebes.
+name: Publicar en YouTube
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: ID del video en YouTube
+        required: true
+      privacidad:
+        type: choice
+        options: [public, unlisted, private]
+        default: public
+      publicar_en:
+        description: "Opcional: fecha ISO para programarlo (p. ej. 2026-11-20T18:00:00Z)"
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cambiar privacidad
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          VIDEO: ${{ inputs.video_id }}
+          PRIV: ${{ inputs.privacidad }}
+          CUANDO: ${{ inputs.publicar_en }}
+        run: python3 estudio/youtube.py publicar --video "$VIDEO" --privacidad "$PRIV" --publicar-en "$CUANDO"

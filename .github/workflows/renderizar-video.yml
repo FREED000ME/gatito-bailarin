@@ -1,0 +1,157 @@
+# Forja3D Cine — renderiza un guion con Blender, monta el video con FFmpeg y lo publica como Release.
+# Lo lanza el conector con la herramienta renderizar_video (o tú desde Actions → Run workflow).
+#   equipo "nube":  runner de GitHub (CPU). Ideal para vistas previas; gratis en repos públicos.
+#   equipo "mi_pc": tu computadora con Blender y GPU, registrada como runner propio con la etiqueta "blender".
+name: Renderizar video
+
+on:
+  workflow_dispatch:
+    inputs:
+      guion:
+        description: Nombre del guion (archivo guiones/<nombre>.json, sin .json)
+        required: true
+      calidad:
+        description: "previa (rápida, 480p) o final (1440p→4K, Cycles completo)"
+        type: choice
+        options: [previa, final]
+        default: previa
+      formatos:
+        description: Qué entregar
+        type: choice
+        options: [ambos, largo, short]
+        default: ambos
+      equipo:
+        description: "nube (GitHub, CPU) o mi_pc (tu Blender con GPU)"
+        type: choice
+        options: [nube, mi_pc]
+        default: nube
+      tomas:
+        description: "Opcional: solo estas tomas, p. ej. sc010/t02,sc020"
+        default: ""
+      subir_youtube:
+        description: "privado = subirlo a YouTube como PRIVADO al terminar"
+        type: choice
+        options: ["no", privado]
+        default: "no"
+      blender_version:
+        description: Versión de Blender en la nube
+        default: 5.2.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: renderizar-video-${{ github.ref_name }}-${{ inputs.equipo }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ${{ inputs.equipo == 'mi_pc' && fromJSON('["self-hosted","blender"]') || 'ubuntu-latest' }}
+    timeout-minutes: ${{ inputs.equipo == 'mi_pc' && 2880 || 350 }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      # Las entradas van por variables de entorno (nunca interpoladas dentro de los scripts)
+      GUION: guiones/${{ inputs.guion }}.json
+      CALIDAD: ${{ inputs.calidad }}
+      FORMATOS: ${{ inputs.formatos }}
+      TOMAS: ${{ inputs.tomas }}
+      EQUIPO: ${{ inputs.equipo }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Caché de Blender (nube)
+        if: inputs.equipo == 'nube'
+        uses: actions/cache@v4
+        with:
+          path: ~/blender
+          key: blender-${{ inputs.blender_version }}-linux-x64
+
+      - name: Preparar Blender, FFmpeg y Python
+        env:
+          VER: ${{ inputs.blender_version }}
+        run: |
+          set -e
+          rm -rf salida && mkdir -p salida
+          if [ ! -f "$GUION" ]; then echo "::error::[ForjaCine] ERROR: no existe $GUION (usa crear_guion primero)"; exit 1; fi
+          PY=$(command -v python3 || command -v python)
+          BL="${BLENDER:-$(command -v blender || true)}"
+          if [ -z "$BL" ] && [ "$RUNNER_OS" = "Linux" ]; then
+            if [ "$EQUIPO" = "nube" ]; then
+              sudo apt-get update -qq
+              sudo apt-get install -y -qq ffmpeg libgl1 libegl1 libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libice6 >/dev/null
+            fi
+            if [ ! -x "$HOME/blender/blender" ]; then
+              MM=$(echo "$VER" | cut -d. -f1,2)
+              URL="https://download.blender.org/release/Blender${MM}/blender-${VER}-linux-x64.tar.xz"
+              echo "[ForjaCine] descargando $URL"
+              mkdir -p "$HOME/blender"
+              curl -fsSL "$URL" | tar -xJ -C "$HOME/blender" --strip-components=1 || { echo "::error::[ForjaCine] ERROR: no pude descargar Blender $VER ($URL)"; exit 1; }
+            fi
+            BL="$HOME/blender/blender"
+          fi
+          if [ -z "$BL" ]; then echo "::error::[ForjaCine] ERROR: no encuentro Blender en este equipo. Ponlo en el PATH o define la variable BLENDER en el archivo .env del runner"; exit 1; fi
+          command -v ffmpeg >/dev/null || [ -n "$FFMPEG" ] || { echo "::error::[ForjaCine] ERROR: falta ffmpeg en este equipo (instálalo y ponlo en el PATH)"; exit 1; }
+          echo "BLENDER_BIN=$BL" >> "$GITHUB_ENV"
+          echo "PY=$PY" >> "$GITHUB_ENV"
+          "$BL" --version | head -n 1
+
+      - name: Renderizar con Blender
+        run: |
+          "$BLENDER_BIN" -b --factory-startup -noaudio -P estudio/forja_cine.py -- \
+            --guion "$GUION" --calidad "$CALIDAD" --salida salida --tomas "$TOMAS" --raiz "$GITHUB_WORKSPACE"
+
+      - name: Montar video (FFmpeg)
+        run: |
+          "$PY" estudio/montar.py --guion "$GUION" --salida salida --calidad "$CALIDAD" \
+            --formatos "$FORMATOS" --tomas "$TOMAS" --raiz "$GITHUB_WORKSPACE"
+
+      - name: Datos de la entrega
+        id: datos
+        run: |
+          "$PY" - <<'PYEOF' >> "$GITHUB_OUTPUT"
+          import json, os
+          m = json.load(open("salida/metadatos.json", encoding="utf-8"))
+          r = m.get("render") or {}
+          print("titulo=" + m["titulo"].replace("\n", " "))
+          print("archivos=" + "\n".join("salida/" + a for a in m["archivos"]).replace("\n", ","))
+          print(f"resumen={m['calidad']} · {m['duracion_s']} s · {r.get('segundos_por_fotograma', '?')} s por fotograma · Blender {r.get('blender', '?')}")
+          PYEOF
+
+      - name: Guardar como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-${{ github.run_number }}
+          path: salida/*.*
+          retention-days: 30
+
+      - name: Publicar Release con el video
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: video-${{ github.run_number }}
+          name: "🎬 ${{ steps.datos.outputs.titulo }} (${{ inputs.calidad }}, render ${{ github.run_number }})"
+          body: |
+            Guion: `${{ inputs.guion }}` · ${{ steps.datos.outputs.resumen }}
+            Generado por Forja3D Cine (Blender + FFmpeg) en ${{ inputs.equipo == 'mi_pc' && 'tu equipo' || 'la nube de GitHub' }}.
+          files: ${{ steps.datos.outputs.archivos }}
+          make_latest: false
+
+      - name: Subir a YouTube (privado)
+        if: inputs.subir_youtube == 'privado'
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: '"$PY" estudio/youtube.py subir --salida salida --privacidad private'
+
+      - name: Añadir los enlaces de YouTube al Release
+        if: inputs.subir_youtube == 'privado'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: video-${{ github.run_number }}
+          files: salida/youtube.json
+
+      - name: Limpiar fotogramas (equipo propio)
+        if: always() && inputs.equipo == 'mi_pc'
+        run: rm -rf salida/frames

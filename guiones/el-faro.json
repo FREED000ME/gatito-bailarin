@@ -1,0 +1,64 @@
+{
+  "titulo": "El faro",
+  "sinopsis": "Al amanecer, el viejo guardián de un faro encuentra en la orilla una botella con un mensaje. Esa noche, a la luz de la lámpara, descubre que alguien lleva años esperando una respuesta.",
+  "idioma": "es",
+  "fps": 24,
+  "estilo": "realista",
+  "sintetico_realista": true,
+  "semilla": 7,
+  "personajes": [
+    { "id": "farero", "modelo": "farero", "altura_m": 1.72, "color": "#3b4a5c", "piel": "#c49a80" }
+  ],
+  "escenas": [
+    {
+      "id": "sc010",
+      "titulo": "La orilla",
+      "set": {
+        "tipo": "exterior", "suelo": "arena", "mar": true,
+        "props": [
+          { "modelo": "faro", "pos": [6, 22, 0] },
+          { "modelo": "roca", "pos": [-5, 4, 0], "escala": 1.6 },
+          { "modelo": "roca", "pos": [4.5, 1.5, 0] },
+          { "modelo": "botella", "pos": [2.6, -1.4, 0.05], "rot_z": 70 }
+        ]
+      },
+      "luz": { "hora": "amanecer", "azimut": 110, "bruma": 0.5 },
+      "atmosfera": { "niebla": 0.25 },
+      "audio": { "ambiente": "assets/audio/olas.wav" },
+      "tomas": [
+        { "id": "t01", "duracion_s": 6, "plano": "general", "camara": [-14, -18, 3], "mira_a": [3, 12, 5], "movimiento": "dolly_in", "nota": "Faro recortado contra el amanecer" },
+        { "id": "t02", "duracion_s": 6, "plano": "medio", "camara": [-1, -9, 1.5], "mira": "farero", "movimiento": "seguimiento",
+          "accion": [ { "personaje": "farero", "desde": [-4, -2], "hasta": [2, -2] } ] },
+        { "id": "t03", "duracion_s": 4, "plano": "detalle", "camara": [3.4, -2.6, 0.5], "mira_a": [2.6, -1.4, 0.08], "movimiento": "en_mano", "intensidad": 0.5,
+          "accion": [ { "personaje": "farero", "desde": [2.2, -2.4], "mira_z": 20 } ] }
+      ]
+    },
+    {
+      "id": "sc020",
+      "titulo": "La lámpara",
+      "set": {
+        "tipo": "interior", "habitacion_m": [5, 4, 2.6], "color_paredes": "#b9ad97", "color_piso": "#4a2f1c",
+        "props": [ { "modelo": "mesa", "pos": [0, 0.6, 0] }, { "modelo": "farol", "pos": [1.6, 1.4, 0], "escala": 0.5 } ]
+      },
+      "luz": { "hora": "noche" },
+      "atmosfera": { "niebla": 0.1 },
+      "tomas": [
+        { "id": "t01", "duracion_s": 6, "plano": "medio", "camara": [-1.8, -1.6, 1.4], "mira": "farero", "movimiento": "en_mano", "intensidad": 0.4,
+          "accion": [ { "personaje": "farero", "desde": [0, -0.1], "mira_z": 0 } ] },
+        { "id": "t02", "duracion_s": 8, "plano": "primer_plano", "camara": [0.4, -1.6, 1.5], "mira": "farero", "movimiento": "dolly_in", "distancia_m": 0.5,
+          "accion": [ { "personaje": "farero", "desde": [0, -0.1], "mira_z": 0 } ],
+          "dialogo": [ { "personaje": "farero", "texto": "Treinta años mirando el mar…", "desde_s": 1, "hasta_s": 3.5 },
+                       { "personaje": "farero", "texto": "y el mar, por fin, me escribe a mí.", "desde_s": 4, "hasta_s": 7 } ] }
+      ]
+    }
+  ],
+  "short": { "desde_s": 6, "hasta_s": 30 },
+  "miniatura": { "segundo": 3 },
+  "youtube": {
+    "titulo": "El faro · cortometraje animado",
+    "etiquetas": ["cortometraje", "animación 3D", "Blender", "faro"],
+    "categoria": "1",
+    "para_ninos": false
+  },
+  "creditos": ["Guion y dirección: Forja3D Cine", "Render: Blender (Cycles)"]
+}
